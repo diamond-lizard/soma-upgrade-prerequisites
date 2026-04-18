@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from soma_upgrade_prerequisites.risk_assessment import (
     find_high_risk_files,
+    find_multi_package_files,
     find_warned_files,
-    list_upgrade_files,
 )
+from soma_upgrade_prerequisites.upgrade_set import list_upgrade_files
 from tests.fakes import InMemoryFileSystem
+from tests.helpers import make_graph, pkg
 
 
 def test_list_upgrade_files() -> None:
@@ -54,3 +56,19 @@ def test_find_high_risk_files() -> None:
     assert "soma-magit-init.el" in result
     assert "soma-forge-init.el" not in result
     assert "CVE" in result["soma-magit-init.el"]
+
+
+def test_find_multi_package_files() -> None:
+    """Identifies init files with more than one package."""
+    graph = make_graph({
+        "soma-multi-init.el": {
+            "packages": [pkg("pkg-a"), pkg("pkg-b")],
+            "depended_on_by": [],
+        },
+        "soma-single-init.el": {
+            "packages": [pkg("single")],
+            "depended_on_by": [],
+        },
+    })
+    result = find_multi_package_files(graph)
+    assert result == {"soma-multi-init.el": 2}

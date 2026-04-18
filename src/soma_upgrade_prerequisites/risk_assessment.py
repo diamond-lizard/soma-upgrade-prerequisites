@@ -7,33 +7,13 @@ import re
 from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 
+from .upgrade_set import SECURITY_SUFFIX, UPGRADE_SUFFIX
+
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from .protocols import FileSystem
+    from .models import DependencyGraph
 
-UPGRADE_SUFFIX = "-upgrade-process.md"
-SECURITY_SUFFIX = "-security-review.md"
-
-
-def list_upgrade_files(fs: FileSystem, upgrades_dir: str) -> list[str]:
-    """List upgrade-process.md files and return init file names.
-
-    The returned list is the upgrade set -- init files with upgrade
-    instructions that are candidates for upgrading.
-    """
-    files = fs.list_files(upgrades_dir, f"*{UPGRADE_SUFFIX}")
-    return [f.removesuffix(UPGRADE_SUFFIX) for f in files]
-
-
-def build_upgrade_path(upgrades_dir: str, init_file: str) -> str:
-    """Build the path to an upgrade-process.md file."""
-    return str(PurePosixPath(upgrades_dir) / f"{init_file}{UPGRADE_SUFFIX}")
-
-
-def build_security_path(upgrades_dir: str, init_file: str) -> str:
-    """Build the path to a security-review.md file."""
-    return str(PurePosixPath(upgrades_dir) / f"{init_file}{SECURITY_SUFFIX}")
 
 
 def classify_grep_matches(
@@ -86,3 +66,17 @@ def find_high_risk_files(
     return classify_grep_matches(
         grep_results, RISK_PATTERNS, SECURITY_SUFFIX,
     )
+
+
+def find_multi_package_files(
+    graph_data: DependencyGraph,
+) -> dict[str, int]:
+    """Identify init files declaring more than one package.
+
+    Returns dict mapping init file name to package count.
+    """
+    return {
+        name: len(entry.packages)
+        for name, entry in graph_data.items()
+        if len(entry.packages) > 1
+    }
