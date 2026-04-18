@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     from .models import DependencyGraph
+    from .protocols import FileSystem
 
 
 
@@ -80,3 +81,17 @@ def find_multi_package_files(
         for name, entry in graph_data.items()
         if len(entry.packages) > 1
     }
+
+
+def find_missing_security_reviews(
+    upgrade_set: Sequence[str],
+    fs: FileSystem,
+    upgrades_dir: str,
+) -> list[str]:
+    """Identify init files lacking a security-review.md file."""
+    from .upgrade_set import build_security_path
+
+    return [
+        init for init in upgrade_set
+        if not fs.file_exists(build_security_path(upgrades_dir, init))
+    ]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from soma_upgrade_prerequisites.risk_assessment import (
     find_high_risk_files,
+    find_missing_security_reviews,
     find_multi_package_files,
     find_warned_files,
 )
@@ -72,3 +73,14 @@ def test_find_multi_package_files() -> None:
     })
     result = find_multi_package_files(graph)
     assert result == {"soma-multi-init.el": 2}
+
+
+def test_find_missing_security_reviews() -> None:
+    """Identifies init files lacking a security-review.md."""
+    fs = InMemoryFileSystem({
+        "upgrades/a.el-security-review.md": "",
+    })
+    result = find_missing_security_reviews(
+        ["a.el", "b.el"], fs, "upgrades",
+    )
+    assert result == ["b.el"]
