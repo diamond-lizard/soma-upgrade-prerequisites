@@ -7,6 +7,8 @@ import importlib.metadata
 
 import click
 
+from .cmd_generate import generate
+
 
 @click.group()
 @click.version_option(
@@ -14,3 +16,6 @@ import click
 )
 def cli() -> None:
     """Automate dependency analysis, risk assessment, and progress tracking for elpaca upgrades."""
+
+
+cli.add_command(generate)
