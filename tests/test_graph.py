@@ -5,6 +5,7 @@ from __future__ import annotations
 from soma_upgrade_prerequisites.graph import (
     build_init_file_dep_graph,
     build_package_to_init_mapping,
+    build_reverse_deps,
 )
 from soma_upgrade_prerequisites.models import DependencyGraph
 
@@ -73,4 +74,17 @@ def test_build_init_file_dep_graph() -> None:
     assert result == {
         "soma-magit-init.el": [],
         "soma-forge-init.el": ["soma-magit-init.el"],
+    }
+
+
+def test_build_reverse_deps() -> None:
+    """If A depends on B, then B's reverse deps include A."""
+    dep_graph = {
+        "soma-magit-init.el": [],
+        "soma-forge-init.el": ["soma-magit-init.el"],
+    }
+    result = build_reverse_deps(dep_graph)
+    assert result == {
+        "soma-magit-init.el": ["soma-forge-init.el"],
+        "soma-forge-init.el": [],
     }

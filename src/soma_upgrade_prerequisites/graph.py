@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from .models import DependencyGraph
 
@@ -40,4 +40,19 @@ def build_init_file_dep_graph(
                 if dep_init is not None and dep_init != init_file:
                     deps.append(dep_init)
         result[init_file] = sorted(set(deps))
+    return result
+
+
+def build_reverse_deps(
+    init_dep_graph: Mapping[str, Sequence[str]],
+) -> dict[str, list[str]]:
+    """Compute direct reverse dependencies (one hop).
+
+    For each init file, which other init files directly depend on it.
+    """
+    result: dict[str, list[str]] = {k: [] for k in init_dep_graph}
+    for init_file, deps in init_dep_graph.items():
+        for dep in deps:
+            if dep in result:
+                result[dep].append(init_file)
     return result
