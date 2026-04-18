@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Dependency graph construction functions."""
 # Dependency graph construction functions.
 # Builds mappings, init-file dependency graphs, and reverse dependencies.
 from __future__ import annotations

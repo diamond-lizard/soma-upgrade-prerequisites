@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Derived dependency data construction for pipeline output."""
 # Derived dependency data construction for pipeline output.
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Upgrade set identification and path-building helpers."""
 # Upgrade set identification and path-building helpers.
 # Lists init files with upgrade instructions (the upgrade candidates).
 from __future__ import annotations

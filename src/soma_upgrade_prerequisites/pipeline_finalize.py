@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pipeline step: assemble outputs and write files."""
 # Pipeline step: assemble outputs and write files.
 from __future__ import annotations
 

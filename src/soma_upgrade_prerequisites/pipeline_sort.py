@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pipeline step: topological sort and internal validation."""
 # Pipeline step: topological sort and internal validation.
 from __future__ import annotations
 

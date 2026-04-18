@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Concrete GitClient implementation using subprocess."""
 # Concrete GitClient implementation using subprocess.
 # This is the production git layer; all other code uses the Protocol.
 from __future__ import annotations

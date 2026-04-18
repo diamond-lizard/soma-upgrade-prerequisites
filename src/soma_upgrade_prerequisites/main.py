@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""CLI entry point for soma-upgrade-prerequisites."""
 # CLI entry point for soma-upgrade-prerequisites.
 # Defines the click group and registers subcommands.
 from __future__ import annotations

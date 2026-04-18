@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Thin pipeline orchestrator for the generate subcommand."""
 # Thin pipeline orchestrator for the generate subcommand.
 # Calls step functions in sequence; zero decision logic.
 from __future__ import annotations

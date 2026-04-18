@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pure status-update logic: apply status change with cascade."""
 # Pure status-update logic: apply status change with cascade.
 from __future__ import annotations
 

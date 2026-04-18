@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""CLI subcommand: show (render tracker as table or show dependents)."""
 # CLI subcommand: show (render tracker as table or show dependents).
 from __future__ import annotations
 

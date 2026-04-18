@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Default paths, schema versions, and file identity constants."""
 # Default paths, schema versions, and file identity constants.
 from __future__ import annotations
 

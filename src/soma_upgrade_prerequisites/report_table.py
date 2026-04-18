@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Table rendering for the progress tracker show subcommand."""
 # Table rendering for the progress tracker show subcommand.
 # Condensed vertical layout with status colorization and filtering.
 from __future__ import annotations

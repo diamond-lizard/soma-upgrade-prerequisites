@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Entry formatting for the progress tracker table."""
 # Entry formatting for the progress tracker table.
 # Renders individual entries with headers, blockers, and notes.
 from __future__ import annotations

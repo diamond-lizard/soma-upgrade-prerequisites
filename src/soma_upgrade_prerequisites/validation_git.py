@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Git-related validation: tracker-vs-git and stale derived data checks."""
 # Git-related validation: tracker-vs-git and stale derived data checks.
 from __future__ import annotations
 

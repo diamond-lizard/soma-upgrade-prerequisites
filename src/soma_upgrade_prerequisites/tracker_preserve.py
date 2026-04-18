@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Status preservation during tracker regeneration."""
 # Status preservation during tracker regeneration.
 # Merges terminal and in-progress statuses from an existing tracker.
 from __future__ import annotations

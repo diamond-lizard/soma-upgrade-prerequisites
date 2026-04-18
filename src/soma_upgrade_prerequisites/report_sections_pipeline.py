@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pipeline-flow report sections: cycles, sort, validation, missing reviews."""
 # Pipeline-flow report sections: cycles, sort, validation, missing reviews.
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Concrete FileSystem implementation using pathlib and os."""
 # Concrete FileSystem implementation using pathlib and os.
 # This is the production I/O layer; all other code uses the Protocol.
 from __future__ import annotations
@@ -30,6 +31,7 @@ class RealFileSystem:
         return Path(path).expanduser().read_text()
 
     def write_file(self, path: str | Path, content: str) -> None:
+        """Write content to file atomically."""
         _atomic_write(Path(path).expanduser(), content)
 
     def copy_file(self, src: str | Path, dst: str | Path) -> None:

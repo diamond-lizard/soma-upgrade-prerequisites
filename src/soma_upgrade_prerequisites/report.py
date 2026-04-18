@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Core report formatting: section formatting and report assembly."""
 # Core report formatting: section formatting and report assembly.
 from __future__ import annotations
 

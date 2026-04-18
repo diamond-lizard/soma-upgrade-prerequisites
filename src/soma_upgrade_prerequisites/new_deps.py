@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Detection of non-empty "New Dependencies" sections."""
 # Detection of non-empty "New Dependencies" sections.
 from __future__ import annotations
 

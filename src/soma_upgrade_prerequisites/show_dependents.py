@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Dependents display logic for the show subcommand."""
 # Dependents display logic for the show subcommand.
 from __future__ import annotations
 

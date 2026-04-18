@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Classification logic for individual orphan packages."""
 # Classification logic for individual orphan packages.
 # Determines why a package has no declaring init file.
 from __future__ import annotations

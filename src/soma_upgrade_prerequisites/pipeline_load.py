@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pipeline step: load and parse the dependency graph JSON."""
 # Pipeline step: load and parse the dependency graph JSON.
 from __future__ import annotations
 

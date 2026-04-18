@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Protocol definitions for I/O boundary abstractions."""
 # Protocol definitions for I/O boundary abstractions.
 # All production code depends on these Protocols, not concrete implementations.
 from __future__ import annotations

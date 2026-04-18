@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Grep helpers for pipeline risk assessment."""
 # Grep helpers for pipeline risk assessment.
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Cascade application: forward blocking and reverse unblocking."""
 # Cascade application: forward blocking and reverse unblocking.
 from __future__ import annotations
 

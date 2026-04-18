@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""CLI subcommand: validate (check tracker/data consistency)."""
 # CLI subcommand: validate (check tracker/data consistency).
 from __future__ import annotations
 

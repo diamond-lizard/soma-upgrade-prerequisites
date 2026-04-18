@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Domain types, status constants, and pattern definitions."""
 # Domain types, status constants, and pattern definitions.
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Entry-level status and note updates for the progress tracker."""
 # Entry-level status and note updates for the progress tracker.
 from __future__ import annotations
 

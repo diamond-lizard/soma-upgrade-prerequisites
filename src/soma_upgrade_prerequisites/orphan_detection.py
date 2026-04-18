@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Orphan package detection and classification."""
 # Orphan package detection and classification.
 # Identifies packages in depends_on that have no declaring init file.
 from __future__ import annotations

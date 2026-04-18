@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Critical path computation for the upgrade dependency graph."""
 # Critical path computation for the upgrade dependency graph.
 # Finds the longest dependency chain among upgrade-set members.
 from __future__ import annotations

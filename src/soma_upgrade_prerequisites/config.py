@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Frozen dataclasses for grouping CLI parameters into clean signatures."""
 # Frozen dataclasses for grouping CLI parameters into clean signatures.
 # These are internal parameter objects, not JSON schemas (not Pydantic).
 from __future__ import annotations

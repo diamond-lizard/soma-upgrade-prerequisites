@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Risk assessment functions for upgrade and security documentation."""
 # Risk assessment functions for upgrade and security documentation.
 # Scans for warning patterns, risk indicators, and new dependencies.
 from __future__ import annotations

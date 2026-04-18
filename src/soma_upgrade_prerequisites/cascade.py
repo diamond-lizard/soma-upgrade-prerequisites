@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Cascade computation and application for status propagation."""
 # Cascade computation and application for status propagation.
 from __future__ import annotations
 

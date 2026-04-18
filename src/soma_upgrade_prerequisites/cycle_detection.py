@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Cycle detection for init-file dependency graphs."""
 # Cycle detection for init-file dependency graphs.
 # Uses DFS to find circular dependencies.
 from __future__ import annotations

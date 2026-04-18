@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Validation orchestration: load data, run checks, report results."""
 # Validation orchestration: load data, run checks, report results.
 from __future__ import annotations
 

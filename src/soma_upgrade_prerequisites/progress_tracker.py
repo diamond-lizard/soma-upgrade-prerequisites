@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Progress tracker creation, reading, updating, and writing."""
 # Progress tracker creation, reading, updating, and writing.
 from __future__ import annotations
 

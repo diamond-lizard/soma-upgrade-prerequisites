@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Flag assembly for tracker entries."""
 # Flag assembly for tracker entries.
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Per-check section helpers for the generate report."""
 # Per-check section helpers for the generate report.
 # Each helper returns a ReportSection for one pipeline check.
 from __future__ import annotations

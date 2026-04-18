@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""CLI subcommand: generate (analysis pipeline and report)."""
 # CLI subcommand: generate (analysis pipeline and report).
 from __future__ import annotations
 

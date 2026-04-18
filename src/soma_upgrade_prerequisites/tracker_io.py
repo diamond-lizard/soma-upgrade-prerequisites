@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Read and write operations for the progress tracker JSON file."""
 # Read and write operations for the progress tracker JSON file.
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Topological sort, dependency levels, and critical path computation."""
 # Topological sort, dependency levels, and critical path computation.
 # Orders init files for the upgrade campaign.
 from __future__ import annotations

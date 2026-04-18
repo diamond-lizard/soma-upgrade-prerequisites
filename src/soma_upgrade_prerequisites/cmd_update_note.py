@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""CLI subcommand: update-note (modify a tracker entry's note)."""
 # CLI subcommand: update-note (modify a tracker entry's note).
 from __future__ import annotations
 

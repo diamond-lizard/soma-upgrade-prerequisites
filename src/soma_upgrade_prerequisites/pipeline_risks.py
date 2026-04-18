@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pipeline step: risk assessment (cycles, warnings, security, new deps)."""
 # Pipeline step: risk assessment (cycles, warnings, security, new deps).
 from __future__ import annotations
 

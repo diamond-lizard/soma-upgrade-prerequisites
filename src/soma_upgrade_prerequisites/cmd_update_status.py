@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""CLI subcommand: update-status (modify tracker entry status with cascade)."""
 # CLI subcommand: update-status (modify tracker entry status with cascade).
 from __future__ import annotations
 

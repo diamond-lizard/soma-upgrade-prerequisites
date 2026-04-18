@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Validation checks for dependency data consistency."""
 # Validation checks for dependency data consistency.
 # Pure functions that return lists of error messages.
 from __future__ import annotations

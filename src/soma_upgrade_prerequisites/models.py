@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Pydantic models for JSON data structures used by the tool."""
 # Pydantic models for JSON data structures used by the tool.
 # Provides runtime validation when loading JSON files.
 from __future__ import annotations

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Read and write operations for derived dependency data JSON."""
 # Read and write operations for derived dependency data JSON.
 from __future__ import annotations
 
