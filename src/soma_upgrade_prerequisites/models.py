@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, RootModel
 
+from .constants import Flag, OrphanClassification, Status
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
-
-    from .constants import Flag, OrphanClassification, Status
 
 
 class PackageEntry(BaseModel):
