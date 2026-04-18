@@ -2,7 +2,10 @@
 # Tests for risk assessment functions.
 from __future__ import annotations
 
-from soma_upgrade_prerequisites.risk_assessment import list_upgrade_files
+from soma_upgrade_prerequisites.risk_assessment import (
+    find_warned_files,
+    list_upgrade_files,
+)
 from tests.fakes import InMemoryFileSystem
 
 
@@ -18,3 +21,19 @@ def test_list_upgrade_files() -> None:
     assert sorted(result) == [
         "init.el", "soma-forge-init.el", "soma-magit-init.el",
     ]
+
+
+def test_find_warned_files() -> None:
+    """Identifies files with warning patterns, maps to init names."""
+    grep_results = {
+        "upgrades/soma-magit-init.el-upgrade-process.md": [
+            "Do not upgrade until v5 is stable",
+        ],
+        "upgrades/soma-forge-init.el-upgrade-process.md": [
+            "Safe to upgrade",
+        ],
+    }
+    result = find_warned_files(grep_results)
+    assert "soma-magit-init.el" in result
+    assert "soma-forge-init.el" not in result
+    assert r"do not upgrade" in result["soma-magit-init.el"]
