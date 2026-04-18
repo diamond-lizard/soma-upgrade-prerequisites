@@ -8,8 +8,8 @@ from pydantic import ValidationError
 from soma_upgrade_prerequisites.progress_tracker import (
     create_tracker,
     find_direct_dependents_any_status,
-    read_tracker,
 )
+from soma_upgrade_prerequisites.tracker_io import read_tracker, write_tracker
 from tests.fakes import InMemoryFileSystem
 from tests.helpers import make_graph, pkg
 
@@ -90,3 +90,15 @@ def test_find_direct_dependents_any_status() -> None:
         "a.el", reverse_deps, tracker,
     )
     assert sorted(result) == ["b.el", "c.el"]
+
+
+def test_write_tracker_backup() -> None:
+    """write_tracker backs up existing file when backup=True."""
+    from tests.tracker_test_helpers import make_tracker
+
+    fs = InMemoryFileSystem({"t.json": "old content"})
+    tracker = make_tracker([])
+    write_tracker(fs, "t.json", tracker, backup=True)
+    assert fs.file_exists("t.json.bak")
+    assert fs.read_file("t.json.bak") == "old content"
+    assert "schema_version" in fs.read_file("t.json")
