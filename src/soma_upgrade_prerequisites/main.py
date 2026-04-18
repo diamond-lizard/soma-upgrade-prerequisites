@@ -8,6 +8,7 @@ import importlib.metadata
 import click
 
 from .cmd_generate import generate
+from .cmd_update_note import update_note
 
 
 @click.group()
@@ -17,5 +18,5 @@ from .cmd_generate import generate
 def cli() -> None:
     """Automate dependency analysis, risk assessment, and progress tracking for elpaca upgrades."""
 
-
 cli.add_command(generate)
+cli.add_command(update_note)
