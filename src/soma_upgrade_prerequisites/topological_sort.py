@@ -19,7 +19,7 @@ def compute_topological_sort(
     """Sort upgrade_set by: elpaca first, deps before dependents,
     warned early, more dependents first.
     """
-    levels = _compute_levels(dep_graph, upgrade_set)
+    levels = assign_dependency_levels(dep_graph, upgrade_set)
     warned = set(warned_files)
     return sorted(
         upgrade_set,
@@ -53,11 +53,16 @@ def _transitive_upgrade_deps(
     return result
 
 
-def _compute_levels(
+def assign_dependency_levels(
     dep_graph: Mapping[str, Sequence[str]],
     upgrade_set: Sequence[str],
 ) -> dict[str, int]:
-    """Assign dependency levels to upgrade-set members."""
+    """Assign dependency levels to upgrade-set members.
+
+    Level 0 = no transitive deps on other upgrade-set members.
+    Level N = max(level of transitive upgrade-set deps) + 1.
+    Non-upgrade-set nodes serve as intermediaries but get no level.
+    """
     members = set(upgrade_set)
     trans: dict[str, set[str]] = {
         m: _transitive_upgrade_deps(m, dep_graph, members)
