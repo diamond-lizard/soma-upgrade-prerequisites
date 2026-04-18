@@ -166,7 +166,7 @@ bin/soma-upgrade-prerequisites validate
 
 Runs five checks:
 
-1. *Mapping completeness* -- every package has a corresponding init file
+1. *Mapping completeness* -- every package declared in the graph has an entry in the package-to-init-file mapping
 2. *Topological order* -- dependencies appear before dependents
 3. *Reverse deps* -- forward and reverse graphs agree
 4. *Tracker vs sort* -- tracker entries match the computed sort
