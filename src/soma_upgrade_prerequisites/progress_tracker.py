@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
     from .constants import Flag
     from .models import DependencyGraph
+    from .protocols import FileSystem
 
 
 def create_tracker(
@@ -59,3 +60,25 @@ def _make_entry(
         notes="",
         blocked_by=[],
     )
+
+
+def read_tracker(
+    fs: FileSystem, tracker_path: str,
+) -> ProgressTracker | None:
+    """Read and parse the progress tracker JSON file.
+
+    Returns None if the file does not exist. Raises ValueError
+    if schema_version does not match.
+    """
+    if not fs.file_exists(tracker_path):
+        return None
+    content = fs.read_file(tracker_path)
+    tracker = ProgressTracker.model_validate_json(content)
+    if tracker.schema_version != TRACKER_SCHEMA_VERSION:
+        msg = (
+            f"Tracker schema version {tracker.schema_version} does not "
+            f"match expected {TRACKER_SCHEMA_VERSION}. "
+            "Please re-run `generate --write`."
+        )
+        raise ValueError(msg)
+    return tracker
