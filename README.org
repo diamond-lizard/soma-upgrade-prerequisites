@@ -7,12 +7,12 @@
 =soma-upgrade-prerequisites= automates the analysis and tracking phases of
 upgrading elpaca-managed Emacs packages.  It parses the dependency graph,
 assesses risks, computes a safe upgrade order, and maintains a JSON progress
-tracker that records the status of every init file throughout the campaign.
+tracker that records the status of every init file in the upgrade set throughout the campaign.
 
 The tool provides five subcommands:
 
 - =generate= -- run the full analysis pipeline and produce output files
-- =show= -- display the tracker as a table, with optional filtering
+- =show= -- display the tracker with optional filtering
 - =update-status= -- change an entry's status with automatic cascade
 - =update-note= -- attach or update a note on an entry
 - =validate= -- check consistency between the tracker, data, and git history
@@ -39,13 +39,13 @@ No manual installation of dependencies is needed.  The shell wrapper invokes
 
 * Inputs
 
-The =generate= subcommand reads these files, which must exist before it runs:
+The =generate= subcommand reads these files:
 
-- =~/.emacs.d/soma/inits-upgrades/soma-inits-dependency-graphs.json= --
+- =~/.emacs.d/soma/inits-upgrades/soma-inits-dependency-graphs.json= (required) --
   the master dependency graph describing all init files and their packages.
 - =~/.emacs.d/soma/inits-upgrades/*-upgrade-process.md= -- one per init file
-  to be upgraded.  Each file is named =<init-file>-upgrade-process.md=
-  (e.g., =soma-magit-init.el-upgrade-process.md=).
+  to be upgraded.  These define the upgrade set; only init files with a
+  matching upgrade-process.md are included.
 - =~/.emacs.d/soma/inits-upgrades/*-security-review.md= -- one per init file.
   A missing security review causes =generate= to report a FAIL.
 
@@ -98,7 +98,7 @@ preserved.  A =.bak= backup is created before overwriting.
 
 ** show
 
-Displays the progress tracker as a human-readable table.
+Displays the progress tracker in a human-readable format.
 
 #+begin_example
 bin/soma-upgrade-prerequisites show                       # all entries
@@ -127,8 +127,6 @@ bin/soma-upgrade-prerequisites update-status soma-magit-init.el skipped --yes --
 The =--yes= flag skips the cascade confirmation prompt (used when the
 decision has already been confirmed in conversation).
 
-The =--force= flag is required to change a terminal status back to a
-non-terminal one (e.g., revisiting a skipped entry):
 The =--force= flag is required when changing a terminal status to a
 non-terminal one (e.g., =skipped= back to =pending=).
 
@@ -152,8 +150,9 @@ bin/soma-upgrade-prerequisites update-note soma-magit-init.el --note "waiting on
 
 Checks that the tracker, derived data, topological sort, and git history are
 all consistent.  Git validation runs against the =elpaca-upgrades= branch
-(configurable with =--branch=) and expects upgrade commits to follow the
-format =[<init-file>] Upgrade <package> from <old-ref> to <new-ref>=.
+(configurable with =--branch=) and expects upgrade commits to match the
+pattern =[<init-file>] Upgrade <package> from ...=.  Only the prefix through
+=from= is checked by the validator.
 
 #+begin_example
 bin/soma-upgrade-prerequisites validate
@@ -172,7 +171,8 @@ Discrepancies are printed grouped by check and the exit code is 1.
 
 * Output Files
 
-All output files are written to =~/.emacs.d/soma/inits-upgrades/= and are
+By default, output files are written to =~/.emacs.d/soma/inits-upgrades/=
+(paths are configurable via command options).  They are
 *not* version controlled.
 
 - =upgrade-progress.json= -- the progress tracker (managed by =show=,
