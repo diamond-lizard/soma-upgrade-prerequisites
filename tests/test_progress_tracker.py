@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from soma_upgrade_prerequisites.progress_tracker import (
     create_tracker,
+    find_direct_dependents_any_status,
     read_tracker,
 )
 from tests.fakes import InMemoryFileSystem
@@ -73,3 +74,19 @@ def test_read_tracker_version_mismatch() -> None:
     fs = InMemoryFileSystem({"t.json": bad_tracker})
     with pytest.raises(ValueError, match=r"re-run"):
         read_tracker(fs, "t.json")
+
+
+def test_find_direct_dependents_any_status() -> None:
+    """Returns all tracker entries that directly depend on the given file."""
+    from tests.tracker_test_helpers import make_entry, make_tracker
+
+    tracker = make_tracker([
+        make_entry("a.el"),
+        make_entry("b.el", "upgraded"),
+        make_entry("c.el", "blocked"),
+    ])
+    reverse_deps = {"a.el": ["b.el", "c.el"], "b.el": [], "c.el": []}
+    result = find_direct_dependents_any_status(
+        "a.el", reverse_deps, tracker,
+    )
+    assert sorted(result) == ["b.el", "c.el"]

@@ -82,3 +82,21 @@ def read_tracker(
         )
         raise ValueError(msg)
     return tracker
+
+
+def find_direct_dependents_any_status(
+    init_file: str,
+    reverse_deps: Mapping[str, Sequence[str]],
+    tracker: ProgressTracker,
+) -> list[str]:
+    """Find all tracker entries that directly depend on init_file.
+
+    Returns init files regardless of their current status.
+    Used by compute_cascade_candidates to traverse through
+    already-blocked nodes.
+    """
+    tracker_files = {e.init_file for e in tracker.entries}
+    return [
+        dep for dep in reverse_deps.get(init_file, [])
+        if dep in tracker_files
+    ]
