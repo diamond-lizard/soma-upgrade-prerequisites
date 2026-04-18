@@ -72,9 +72,9 @@ View the progress tracker:
 bin/soma-upgrade-prerequisites show
 #+end_example
 
-The wrapper script resolves its own project root automatically.  The
-examples above assume =bin/= is on your =PATH= or you are in the project
-root; use an absolute path or symlink otherwise.
+The wrapper script resolves symlinks and finds its own project root
+automatically, so it can be invoked from any directory via a symlink
+(e.g., =~/bin/soma-upgrade-prerequisites=).
 
 * Subcommands
 
