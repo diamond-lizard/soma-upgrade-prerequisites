@@ -46,3 +46,22 @@ def validate_topological_order(
                     f"{dep} appears after {init_file} but is a dependency"
                 )
     return errors
+
+
+def validate_reverse_deps(
+    dep_graph: Mapping[str, Sequence[str]],
+    reverse_deps: Mapping[str, Sequence[str]],
+) -> list[str]:
+    """Verify consistency: if A depends on B, B's reverse deps include A.
+
+    Returns a list of error messages (empty means valid).
+    """
+    errors: list[str] = []
+    for init_file, deps in dep_graph.items():
+        for dep in deps:
+            rev = reverse_deps.get(dep, [])
+            if init_file not in rev:
+                errors.append(
+                    f"{dep} reverse deps missing {init_file}"
+                )
+    return errors
