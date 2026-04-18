@@ -6,6 +6,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from .models import DependencyGraph
 
 
@@ -18,3 +20,24 @@ def build_package_to_init_mapping(
         for init_file, entry in graph_data.items()
         for pkg in entry.packages
     }
+
+
+def build_init_file_dep_graph(
+    graph_data: DependencyGraph,
+    pkg_to_init: Mapping[str, str],
+) -> dict[str, list[str]]:
+    """Build init-file-to-init-file dependency graph.
+
+    Resolves package dependencies through pkg_to_init mapping.
+    Skips self-dependencies and unmapped packages.
+    """
+    result: dict[str, list[str]] = {}
+    for init_file, entry in graph_data.items():
+        deps: list[str] = []
+        for pkg in entry.packages:
+            for dep_pkg in pkg.depends_on:
+                dep_init = pkg_to_init.get(dep_pkg)
+                if dep_init is not None and dep_init != init_file:
+                    deps.append(dep_init)
+        result[init_file] = sorted(set(deps))
+    return result
