@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from soma_upgrade_prerequisites.risk_assessment import (
+    find_high_risk_files,
     find_warned_files,
     list_upgrade_files,
 )
@@ -37,3 +38,19 @@ def test_find_warned_files() -> None:
     assert "soma-magit-init.el" in result
     assert "soma-forge-init.el" not in result
     assert r"do not upgrade" in result["soma-magit-init.el"]
+
+
+def test_find_high_risk_files() -> None:
+    """Identifies security-review.md files with risk patterns."""
+    grep_results = {
+        "upgrades/soma-magit-init.el-security-review.md": [
+            "CVE-2024-1234 found in dependency",
+        ],
+        "upgrades/soma-forge-init.el-security-review.md": [
+            "No issues found",
+        ],
+    }
+    result = find_high_risk_files(grep_results)
+    assert "soma-magit-init.el" in result
+    assert "soma-forge-init.el" not in result
+    assert "CVE" in result["soma-magit-init.el"]
