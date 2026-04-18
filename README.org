@@ -9,14 +9,24 @@ upgrading elpaca-managed Emacs packages.  It parses the dependency graph,
 assesses risks, computes a safe upgrade order, and maintains a JSON progress
 tracker that records the status of every init file throughout the campaign.
 
-The tool replaces the manual dependency-analysis and tracker-management steps
-in the elpaca package upgrade plan with five subcommands:
+The tool provides five subcommands:
 
 - =generate= -- run the full analysis pipeline and produce output files
 - =show= -- display the tracker as a table, with optional filtering
 - =update-status= -- change an entry's status with automatic cascade
 - =update-note= -- attach or update a note on an entry
 - =validate= -- check consistency between the tracker, data, and git history
+
+* Concepts
+
+The unit of work is the *init file*, not the individual package.  Each init
+file (e.g., =soma-magit-init.el=) declares one or more packages.  The tool
+collapses package-level dependencies into init-file-level dependencies: if
+any package in init file A depends on a package declared by init file B, then
+A depends on B.
+
+All subcommands take *init file names* (like =soma-magit-init.el=), not
+package names (like =magit=).  The progress tracker is keyed by init file.
 
 * Prerequisites
 
@@ -25,6 +35,21 @@ in the elpaca package upgrade plan with five subcommands:
 
 No manual installation of dependencies is needed.  The shell wrapper invokes
 =uv run=, which installs everything on first use.
+
+* Inputs
+
+The =generate= subcommand reads these files, which must exist before it runs:
+
+- =~/.emacs.d/soma/inits-upgrades/soma-inits-dependency-graphs.json= --
+  the master dependency graph describing all init files and their packages.
+- =~/.emacs.d/soma/inits-upgrades/*-upgrade-process.md= -- one per init file
+  to be upgraded.  Each file is named =<init-file>-upgrade-process.md=
+  (e.g., =soma-magit-init.el-upgrade-process.md=).
+- =~/.emacs.d/soma/inits-upgrades/*-security-review.md= -- one per init file.
+  A missing security review causes =generate= to report a FAIL.
+
+The tool also checks =~/.emacs.d/soma/inits/= for init files on disk (used
+for orphan package classification).
 
 * Quick Start
 
@@ -45,6 +70,9 @@ View the progress tracker:
 #+begin_example
 bin/soma-upgrade-prerequisites show
 #+end_example
+
+The wrapper script can be invoked from any directory -- it resolves its own
+project root automatically.
 
 * Subcommands
 
@@ -80,7 +108,7 @@ bin/soma-upgrade-prerequisites show --dependents soma-magit-init.el
 
 The =--dependents= option shows which entries would be cascade-blocked if
 the given init file were skipped or reverted, plus any other dependents
-(upgraded, skipped, etc.) for awareness.
+(upgraded, skipped, etc.) for rollback awareness.
 
 ** update-status
 
@@ -105,7 +133,8 @@ bin/soma-upgrade-prerequisites update-status soma-magit-init.el pending --force
 #+end_example
 
 This triggers a reverse cascade, automatically unblocking dependents that
-were blocked solely by this entry.
+were blocked solely by this entry.  A blocked entry with multiple blockers
+remains blocked until all its blockers are removed.
 
 The =blocked= status cannot be set manually -- it is managed exclusively by
 the cascade mechanism.
@@ -121,7 +150,9 @@ bin/soma-upgrade-prerequisites update-note soma-magit-init.el --note "waiting on
 ** validate
 
 Checks that the tracker, derived data, topological sort, and git history are
-all consistent.
+all consistent.  Git validation runs against the =elpaca-upgrades= branch
+(configurable with =--branch=) and expects upgrade commits to follow the
+format =[<init-file>] Upgrade <package> from <old-ref> to <new-ref>=.
 
 #+begin_example
 bin/soma-upgrade-prerequisites validate
@@ -163,3 +194,12 @@ tracker is created before each overwrite.
    cascade impact, then =update-status ... skipped=.
 5. Run =validate= periodically to check for inconsistencies.
 6. If the dependency graph changes, re-run =generate --write= to update.
+
+* Troubleshooting
+
+- *"Derived data not found"* or *"Dependency graph has changed"*: the derived
+  data is missing or stale.  Re-run =generate --write= to regenerate it.
+- *"Tracker not found"*: run =generate --write= to create the tracker.
+- *Validation reports tracker-vs-git discrepancies*: check that upgrade
+  commits on the =elpaca-upgrades= branch follow the expected format
+  (=[<init-file>] Upgrade ...=).  See =validate --help= for options.
