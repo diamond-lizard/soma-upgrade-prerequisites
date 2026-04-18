@@ -39,7 +39,8 @@ No manual installation of dependencies is needed.  The shell wrapper invokes
 
 * Inputs
 
-The =generate= subcommand reads these files:
+The =generate= subcommand requires access to a git repository with the
+target branch (default =elpaca-upgrades=) and reads these files:
 
 - =~/.emacs.d/soma/inits-upgrades/soma-inits-dependency-graphs.json= (required) --
   the master dependency graph describing all init files and their packages.
@@ -120,8 +121,8 @@ skipped, etc.) for rollback awareness.
 
 Changes an entry's status.  When the new status is =skipped= or =reverted=,
 pending and in-progress transitive dependents are set to =blocked=.
-Already-blocked dependents may gain an additional blocker entry (if not already listed) (so they remain
-blocked even if one blocker is later removed).
+Already-blocked dependents may gain an additional blocker (if not already
+listed), so they remain blocked even if one blocker is later removed.
 
 #+begin_example
 bin/soma-upgrade-prerequisites update-status soma-magit-init.el in-progress
@@ -180,8 +181,9 @@ By default, output files are written to =~/.emacs.d/soma/inits-upgrades/=
 (paths are configurable via command options).  They are
 *not* version controlled.
 
-- =upgrade-progress.json= -- the progress tracker (managed by =show=,
-  =update-status=, =update-note=, =validate=)
+- =upgrade-progress.json= -- the progress tracker (written by
+  =generate --write=, =update-status=, and =update-note=; read by =show=
+  and =validate=)
 - =derived-dependency-data.json= -- persisted analysis results (loaded
   automatically by the subcommands that need them)
 
