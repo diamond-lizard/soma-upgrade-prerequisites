@@ -92,9 +92,11 @@ bin/soma-upgrade-prerequisites generate          # dry run
 bin/soma-upgrade-prerequisites generate --write  # write files
 #+end_example
 
-When =--write= is used and a tracker already exists, terminal statuses
-(=upgraded=, =skipped=, =blocked=, =reverted=) and =in-progress= are
-preserved.  A =.bak= backup is created before overwriting.
+When =--write= is used and a tracker already exists, statuses in
+=upgraded=, =skipped=, =reverted=, =in-progress=, and =blocked= are
+preserved.  (A =blocked= entry whose blockers are no longer in the
+dependency chain is automatically reset to =pending=.)  A =.bak= backup
+is created before overwriting.
 
 ** show
 
@@ -107,9 +109,11 @@ bin/soma-upgrade-prerequisites show --flags               # only flagged
 bin/soma-upgrade-prerequisites show --dependents soma-magit-init.el
 #+end_example
 
-The =--dependents= option shows which entries would be cascade-blocked if
-the given init file were skipped or reverted, plus any other dependents
-(upgraded, skipped, etc.) for rollback awareness.
+The =--dependents= option shows which entries would be affected by a
+cascade if the given init file were skipped or reverted: pending and
+in-progress entries that would be newly blocked, already-blocked entries
+that would gain an additional blocker, plus any other dependents (upgraded,
+skipped, etc.) for rollback awareness.
 
 ** update-status
 
@@ -164,7 +168,7 @@ Runs five checks:
 2. *Topological order* -- dependencies appear before dependents
 3. *Reverse deps* -- forward and reverse graphs agree
 4. *Tracker vs sort* -- tracker entries match the computed sort
-5. *Tracker vs git* -- upgraded entries have matching commits, and vice versa
+5. *Tracker vs git* -- upgraded entries have matching commits; upgrade commits have a matching =upgraded= or =reverted= entry
 
 If all checks pass, prints "All validation checks passed." and exits 0.
 Discrepancies are printed grouped by check and the exit code is 1.
