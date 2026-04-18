@@ -1,0 +1,165 @@
+#+TITLE: soma-upgrade-prerequisites
+#+AUTHOR:
+#+OPTIONS: toc:2 num:nil
+
+* Overview
+
+=soma-upgrade-prerequisites= automates the analysis and tracking phases of
+upgrading elpaca-managed Emacs packages.  It parses the dependency graph,
+assesses risks, computes a safe upgrade order, and maintains a JSON progress
+tracker that records the status of every init file throughout the campaign.
+
+The tool replaces the manual dependency-analysis and tracker-management steps
+in the elpaca package upgrade plan with five subcommands:
+
+- =generate= -- run the full analysis pipeline and produce output files
+- =show= -- display the tracker as a table, with optional filtering
+- =update-status= -- change an entry's status with automatic cascade
+- =update-note= -- attach or update a note on an entry
+- =validate= -- check consistency between the tracker, data, and git history
+
+* Prerequisites
+
+- Python 3.12 or later
+- [[https://docs.astral.sh/uv/][uv]] (manages the virtual environment and dependencies automatically)
+
+No manual installation of dependencies is needed.  The shell wrapper invokes
+=uv run=, which installs everything on first use.
+
+* Quick Start
+
+Run the analysis pipeline (dry run -- no files are written):
+
+#+begin_example
+bin/soma-upgrade-prerequisites generate
+#+end_example
+
+Review the report.  When satisfied, write the tracker and derived data:
+
+#+begin_example
+bin/soma-upgrade-prerequisites generate --write
+#+end_example
+
+View the progress tracker:
+
+#+begin_example
+bin/soma-upgrade-prerequisites show
+#+end_example
+
+* Subcommands
+
+** generate
+
+Runs the full analysis pipeline: parses the dependency graph, detects cycles,
+identifies the upgrade set, scans for warnings and risks, computes the
+topological sort, and assembles a report.
+
+By default this is a dry run -- the report is printed to stdout and no files
+are written.  Add =--write= to create or update the progress tracker and
+derived data files.
+
+#+begin_example
+bin/soma-upgrade-prerequisites generate          # dry run
+bin/soma-upgrade-prerequisites generate --write  # write files
+#+end_example
+
+When =--write= is used and a tracker already exists, terminal statuses
+(=upgraded=, =skipped=, =blocked=, =reverted=) and =in-progress= are
+preserved.  A =.bak= backup is created before overwriting.
+
+** show
+
+Displays the progress tracker as a human-readable table.
+
+#+begin_example
+bin/soma-upgrade-prerequisites show                       # all entries
+bin/soma-upgrade-prerequisites show --status pending      # only pending
+bin/soma-upgrade-prerequisites show --flags               # only flagged
+bin/soma-upgrade-prerequisites show --dependents soma-magit-init.el
+#+end_example
+
+The =--dependents= option shows which entries would be cascade-blocked if
+the given init file were skipped or reverted, plus any other dependents
+(upgraded, skipped, etc.) for awareness.
+
+** update-status
+
+Changes an entry's status.  When the new status is =skipped= or =reverted=,
+all pending, in-progress, and blocked transitive dependents are automatically
+cascade-blocked.
+
+#+begin_example
+bin/soma-upgrade-prerequisites update-status soma-magit-init.el in-progress
+bin/soma-upgrade-prerequisites update-status soma-magit-init.el upgraded --note "clean upgrade"
+bin/soma-upgrade-prerequisites update-status soma-magit-init.el skipped --yes --note "defer to next cycle"
+#+end_example
+
+The =--yes= flag skips the cascade confirmation prompt (used when the
+decision has already been confirmed in conversation).
+
+The =--force= flag is required to change a terminal status back to a
+non-terminal one (e.g., revisiting a skipped entry):
+
+#+begin_example
+bin/soma-upgrade-prerequisites update-status soma-magit-init.el pending --force
+#+end_example
+
+This triggers a reverse cascade, automatically unblocking dependents that
+were blocked solely by this entry.
+
+The =blocked= status cannot be set manually -- it is managed exclusively by
+the cascade mechanism.
+
+** update-note
+
+Attaches or replaces a note on an entry without changing its status.
+
+#+begin_example
+bin/soma-upgrade-prerequisites update-note soma-magit-init.el --note "waiting on upstream fix"
+#+end_example
+
+** validate
+
+Checks that the tracker, derived data, topological sort, and git history are
+all consistent.
+
+#+begin_example
+bin/soma-upgrade-prerequisites validate
+#+end_example
+
+Runs five checks:
+
+1. *Mapping completeness* -- every package has a corresponding init file
+2. *Topological order* -- dependencies appear before dependents
+3. *Reverse deps* -- forward and reverse graphs agree
+4. *Tracker vs sort* -- tracker entries match the computed sort
+5. *Tracker vs git* -- upgraded entries have matching commits, and vice versa
+
+If all checks pass, prints "All validation checks passed." and exits 0.
+Discrepancies are printed grouped by check and the exit code is 1.
+
+* Output Files
+
+All output files are written to =~/.emacs.d/soma/inits-upgrades/= and are
+*not* version controlled.
+
+- =upgrade-progress.json= -- the progress tracker (managed by =show=,
+  =update-status=, =update-note=, =validate=)
+- =derived-dependency-data.json= -- persisted analysis results (loaded
+  automatically by the subcommands that need them)
+
+Both files are created by =generate --write=.  A =.bak= backup of the
+tracker is created before each overwrite.
+
+* Typical Workflow
+
+1. Run =generate --write= to create the tracker and derived data.
+2. Run =show= to review the upgrade order.
+3. For each pending entry (in order):
+   - Set it to =in-progress= with =update-status=.
+   - Perform the upgrade (on a dedicated git branch).
+   - Set it to =upgraded= with =update-status=.
+4. If an entry must be skipped, run =show --dependents= first to see the
+   cascade impact, then =update-status ... skipped=.
+5. Run =validate= periodically to check for inconsistencies.
+6. If the dependency graph changes, re-run =generate --write= to update.
