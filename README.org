@@ -25,8 +25,9 @@ collapses package-level dependencies into init-file-level dependencies: if
 any package in init file A depends on a package declared by init file B, then
 A depends on B.
 
-All subcommands take *init file names* (like =soma-magit-init.el=), not
-package names (like =magit=).  The progress tracker is keyed by init file.
+When a subcommand requires an init file, use its full name (like
+=soma-magit-init.el=), not the package name (like =magit=).  The progress
+tracker is keyed by init file.
 
 * Prerequisites
 
@@ -113,8 +114,9 @@ the given init file were skipped or reverted, plus any other dependents
 ** update-status
 
 Changes an entry's status.  When the new status is =skipped= or =reverted=,
-all pending, in-progress, and blocked transitive dependents are automatically
-cascade-blocked.
+pending and in-progress transitive dependents are set to =blocked=.
+Already-blocked dependents gain an additional blocker entry (so they remain
+blocked even if one blocker is later removed).
 
 #+begin_example
 bin/soma-upgrade-prerequisites update-status soma-magit-init.el in-progress
@@ -127,14 +129,13 @@ decision has already been confirmed in conversation).
 
 The =--force= flag is required to change a terminal status back to a
 non-terminal one (e.g., revisiting a skipped entry):
+The =--force= flag is required when changing a terminal status to a
+non-terminal one (e.g., =skipped= back to =pending=).
 
-#+begin_example
-bin/soma-upgrade-prerequisites update-status soma-magit-init.el pending --force
-#+end_example
-
-This triggers a reverse cascade, automatically unblocking dependents that
-were blocked solely by this entry.  A blocked entry with multiple blockers
-remains blocked until all its blockers are removed.
+Reverse cascade runs automatically whenever an entry moves away from
+=skipped=, =blocked=, or =reverted= to a status outside that set.  This
+unblocks dependents that were blocked solely by this entry.  A blocked entry
+with multiple blockers remains blocked until all its blockers are removed.
 
 The =blocked= status cannot be set manually -- it is managed exclusively by
 the cascade mechanism.
