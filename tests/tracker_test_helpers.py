@@ -24,10 +24,11 @@ def make_entry(
     status: str = "pending",
     notes: str = "",
     blocked_by: list[str] | None = None,
+    flags: list[str] | None = None,
 ) -> TrackerEntry:
     """Build a minimal TrackerEntry."""
     return TrackerEntry(
         order=1, init_file=init_file, package="pkg",
-        level=0, flags=[], status=status, notes=notes,
+        level=0, flags=flags or [], status=status, notes=notes,
         blocked_by=blocked_by or [],
     )
