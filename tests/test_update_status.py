@@ -2,6 +2,8 @@
 # Tests for cascade computation functions and update-status subcommand.
 from __future__ import annotations
 
+from click.testing import CliRunner
+
 from soma_upgrade_prerequisites.cascade import (
     compute_all_transitive_dependents,
     compute_cascade_candidates,
@@ -11,6 +13,10 @@ from soma_upgrade_prerequisites.cascade_apply import (
     apply_reverse_cascade,
 )
 from soma_upgrade_prerequisites.constants import CascadeCandidate
+from soma_upgrade_prerequisites.main import cli
+from soma_upgrade_prerequisites.status_update import (
+    apply_status_update,
+)
 
 from .tracker_test_helpers import make_entry, make_tracker
 
@@ -197,3 +203,168 @@ def test_cascade_stacking_new_blocker() -> None:
     entry_b = next(e for e in result.entries if e.init_file == "b.el")
     assert "x.el" in entry_b.blocked_by
     assert "a.el" in entry_b.blocked_by
+
+
+def test_update_status_help() -> None:
+    """(a) update-status --help prints help text."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["update-status", "--help"])
+    assert result.exit_code == 0
+    assert "update-status" in result.output.lower()
+
+
+def test_update_status_invalid_status() -> None:
+    """(b) Invalid status value produces an error."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["update-status", "a.el", "nonsense"])
+    assert result.exit_code != 0
+
+
+def test_update_status_blocked_rejected() -> None:
+    """(b) blocked is excluded from CLI choices."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["update-status", "a.el", "blocked"])
+    assert result.exit_code != 0
+
+
+def test_apply_status_update_changes_status() -> None:
+    """(c) Status change applies correctly."""
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    updated, _ = apply_status_update(
+        tracker, "a.el", "in-progress",
+        note=None, force=False, forward_candidates=None,
+    )
+    entry = next(e for e in updated.entries if e.init_file == "a.el")
+    assert entry.status == "in-progress"
+
+
+def test_apply_status_update_forward_cascade() -> None:
+    """(d) Forward candidates are cascade-blocked automatically."""
+    tracker = make_tracker([
+        make_entry("a.el", status="pending"),
+        make_entry("b.el", status="pending"),
+    ])
+    candidates = [CascadeCandidate(position=1, init_file="b.el")]
+    updated, _ = apply_status_update(
+        tracker, "a.el", "skipped",
+        note=None, force=False, forward_candidates=candidates,
+    )
+    entry_b = next(e for e in updated.entries if e.init_file == "b.el")
+    assert entry_b.status == "blocked"
+
+
+def test_apply_status_update_no_forward_when_none() -> None:
+    """(f) No forward cascade when forward_candidates is None."""
+    tracker = make_tracker([
+        make_entry("a.el", status="pending"),
+        make_entry("b.el", status="pending"),
+    ])
+    updated, _ = apply_status_update(
+        tracker, "a.el", "skipped",
+        note=None, force=False, forward_candidates=None,
+    )
+    entry_b = next(e for e in updated.entries if e.init_file == "b.el")
+    assert entry_b.status == "pending"
+
+
+def test_apply_status_update_reverse_cascade() -> None:
+    """(g) Reverse cascade when previous status was in REVERSE_CASCADE."""
+    tracker = make_tracker([
+        make_entry("a.el", status="skipped"),
+        make_entry("b.el", status="blocked", blocked_by=["a.el"]),
+    ])
+    updated, _ = apply_status_update(
+        tracker, "a.el", "pending",
+        note=None, force=True, forward_candidates=None,
+    )
+    entry_b = next(e for e in updated.entries if e.init_file == "b.el")
+    assert entry_b.status == "pending"
+    assert entry_b.blocked_by == []
+
+
+def test_apply_status_update_reverse_no_derived_data() -> None:
+    """(i) Reverse cascade works without derived data."""
+    tracker = make_tracker([
+        make_entry("a.el", status="blocked", blocked_by=["x.el"]),
+        make_entry("b.el", status="blocked", blocked_by=["a.el"]),
+    ])
+    updated, _ = apply_status_update(
+        tracker, "a.el", "pending",
+        note=None, force=True, forward_candidates=None,
+    )
+    entry_b = next(e for e in updated.entries if e.init_file == "b.el")
+    assert entry_b.status == "pending"
+
+
+def test_update_status_stale_derived_data(tmp_path: object) -> None:
+    """(h) Stale derived data produces exit code 1."""
+    import json
+    from pathlib import Path
+
+    p = Path(str(tmp_path))
+    tracker = make_tracker([
+        make_entry("a.el", status="pending"),
+    ])
+    tracker_path = p / "tracker.json"
+    tracker_path.write_text(tracker.model_dump_json(indent=2))
+    derived = {
+        "schema_version": 1,
+        "source_graph_hash": "stale_hash",
+        "pkg_to_init": {},
+        "init_to_packages": {},
+        "init_dep_graph": {},
+        "reverse_deps": {},
+        "sorted_files": [],
+    }
+    derived_path = p / "derived.json"
+    derived_path.write_text(json.dumps(derived))
+    graph_path = p / "graph.json"
+    graph_path.write_text("{}")
+    runner = CliRunner()
+    result = runner.invoke(cli, [
+        "update-status", "a.el", "skipped",
+        "--tracker", str(tracker_path),
+        "--derived-data", str(derived_path),
+        "--graph-json", str(graph_path),
+        "--yes",
+    ])
+    assert result.exit_code == 1
+
+
+def test_update_status_confirm_decline(tmp_path: object) -> None:
+    """(j) Confirmation decline exits with code 0, tracker unchanged."""
+    from pathlib import Path
+
+    p = Path(str(tmp_path))
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    tracker_path = p / "tracker.json"
+    tracker_path.write_text(tracker.model_dump_json(indent=2))
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "update-status", "a.el", "in-progress",
+            "--tracker", str(tracker_path),
+        ],
+    )
+    assert result.exit_code == 0
+
+
+def test_update_status_yes_flag(tmp_path: object) -> None:
+    """(k) --yes auto-confirms without prompting."""
+    from pathlib import Path
+
+    p = Path(str(tmp_path))
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    tracker_path = p / "tracker.json"
+    tracker_path.write_text(tracker.model_dump_json(indent=2))
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "update-status", "a.el", "in-progress",
+            "--tracker", str(tracker_path),
+            "--yes",
+        ],
+    )
+    assert result.exit_code == 0
