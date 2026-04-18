@@ -11,7 +11,7 @@ tracker that records the status of every init file in the upgrade set throughout
 
 The tool provides five subcommands:
 
-- =generate= -- run the full analysis pipeline and produce output files
+- =generate= -- run the full analysis pipeline (writes files only with =--write=)
 - =show= -- display the tracker with optional filtering
 - =update-status= -- change an entry's status with automatic cascade
 - =update-note= -- attach or update a note on an entry
@@ -72,8 +72,9 @@ View the progress tracker:
 bin/soma-upgrade-prerequisites show
 #+end_example
 
-The wrapper script can be invoked from any directory -- it resolves its own
-project root automatically.
+The wrapper script resolves its own project root automatically.  The
+examples above assume =bin/= is on your =PATH= or you are in the project
+root; use an absolute path or symlink otherwise.
 
 * Subcommands
 
@@ -112,14 +113,14 @@ bin/soma-upgrade-prerequisites show --dependents soma-magit-init.el
 The =--dependents= option shows which entries would be affected by a
 cascade if the given init file were skipped or reverted: pending and
 in-progress entries that would be newly blocked, already-blocked entries
-that would gain an additional blocker, plus any other dependents (upgraded,
+that may gain an additional blocker, plus any other dependents (upgraded,
 skipped, etc.) for rollback awareness.
 
 ** update-status
 
 Changes an entry's status.  When the new status is =skipped= or =reverted=,
 pending and in-progress transitive dependents are set to =blocked=.
-Already-blocked dependents gain an additional blocker entry (so they remain
+Already-blocked dependents may gain an additional blocker entry (if not already listed) (so they remain
 blocked even if one blocker is later removed).
 
 #+begin_example
@@ -207,4 +208,4 @@ tracker is created before each overwrite.
 - *"Tracker not found"*: run =generate --write= to create the tracker.
 - *Validation reports tracker-vs-git discrepancies*: check that upgrade
   commits on the =elpaca-upgrades= branch follow the expected format
-  (=[<init-file>] Upgrade ...=).  See =validate --help= for options.
+  (=[<init-file>] Upgrade <package> from ...=).  See =validate --help= for options.
