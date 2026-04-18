@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from .models import DependencyGraph
 
@@ -25,5 +25,24 @@ def validate_mapping_completeness(
             if p.package not in pkg_to_init:
                 errors.append(
                     f"Package '{p.package}' in {name} has no mapping"
+                )
+    return errors
+
+
+def validate_topological_order(
+    sorted_files: Sequence[str],
+    dep_graph: Mapping[str, Sequence[str]],
+) -> list[str]:
+    """Verify every init file's deps appear earlier in the sort.
+
+    Returns a list of error messages (empty means valid).
+    """
+    position = {f: i for i, f in enumerate(sorted_files)}
+    errors: list[str] = []
+    for init_file in sorted_files:
+        for dep in dep_graph.get(init_file, []):
+            if dep in position and position[dep] > position[init_file]:
+                errors.append(
+                    f"{dep} appears after {init_file} but is a dependency"
                 )
     return errors
