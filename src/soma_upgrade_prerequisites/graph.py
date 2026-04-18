@@ -56,3 +56,22 @@ def build_reverse_deps(
             if dep in result:
                 result[dep].append(init_file)
     return result
+
+
+def validate_depended_on_by(
+    graph_data: DependencyGraph,
+    reverse_deps: Mapping[str, Sequence[str]],
+) -> list[str]:
+    """Cross-check JSON depended_on_by against computed reverse deps.
+
+    Returns a list of discrepancy messages (empty means consistent).
+    """
+    errors: list[str] = []
+    for name, entry in graph_data.items():
+        declared = sorted(entry.depended_on_by)
+        computed = sorted(reverse_deps.get(name, []))
+        if declared != computed:
+            errors.append(
+                f"{name}: depended_on_by {declared} != computed {computed}"
+            )
+    return errors
