@@ -16,7 +16,7 @@ from .cmd_validate import validate
 from .cmd_write_analysis import write_analysis
 
 
-@click.group()
+@click.group(context_settings={"max_content_width": 9999})
 @click.version_option(
     version=importlib.metadata.version("soma-upgrade-prerequisites"),
 )
