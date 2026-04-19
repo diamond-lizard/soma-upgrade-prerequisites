@@ -34,7 +34,7 @@ def update_note(init_file: str, note: str, tracker: str) -> None:
     trk = read_tracker(fs, tracker)
     if trk is None:
         click.echo(
-            "Tracker file not found. Run `generate --write` first.",
+            "Tracker file not found. Run `write-analysis` first.",
             err=True,
         )
         sys.exit(1)

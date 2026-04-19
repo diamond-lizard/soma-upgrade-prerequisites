@@ -65,6 +65,7 @@ def test_validate_missing_tracker() -> None:
         "validate", "--tracker", "/nonexistent/tracker.json",
     ])
     assert result.exit_code == 1
+    assert "write-analysis" in result.output
 
 
 def _write_validate_files(
@@ -170,6 +171,7 @@ def test_validate_missing_derived_data(tmp_path: Path) -> None:
     ])
     assert result.exit_code == 1
 
+    assert "write-analysis" in result.output
 
 def test_validate_stale_derived_data(tmp_path: Path) -> None:
     """(i) Stale hash produces exit code 1."""

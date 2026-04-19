@@ -45,7 +45,7 @@ def validate(
         click.echo(str(exc), err=True)
         sys.exit(1)
     if trk is None:
-        click.echo("Tracker not found. Run `generate --write`.", err=True)
+        click.echo("Tracker not found. Run `write-analysis`.", err=True)
         sys.exit(1)
     try:
         from .validate_runner import run_validation

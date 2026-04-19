@@ -9,10 +9,11 @@ upgrading elpaca-managed Emacs packages.  It parses the dependency graph,
 assesses risks, computes a safe upgrade order, and maintains a JSON progress
 tracker that records the status of every init file in the upgrade set throughout the campaign.
 
-The tool provides five subcommands:
+The tool provides six subcommands:
 
-- =generate= -- run the full analysis pipeline (writes files only with =--write=)
-- =show= -- display the tracker with optional filtering
+- =preview-analysis= -- run the full analysis pipeline and print a report (no files written)
+- =write-analysis= -- run the analysis pipeline and write tracker and derived data files
+- =show-tracker= -- display the tracker with optional filtering
 - =update-status= -- change an entry's status with automatic cascade
 - =update-note= -- attach or update a note on an entry
 - =validate= -- check consistency between the tracker, data, and git history
@@ -39,7 +40,7 @@ No manual installation of dependencies is needed.  The shell wrapper invokes
 
 * Inputs
 
-The =generate= subcommand requires access to a git repository with the
+The analysis subcommands (=preview-analysis= and =write-analysis=) require access to a git repository with the
 target branch (default =elpaca-upgrades=) and reads these files:
 
 - =~/.emacs.d/soma/inits-upgrades/soma-inits-dependency-graphs.json= (required) --
@@ -48,7 +49,7 @@ target branch (default =elpaca-upgrades=) and reads these files:
   to be upgraded.  These define the upgrade set; only init files with a
   matching upgrade-process.md are included.
 - =~/.emacs.d/soma/inits-upgrades/*-security-review.md= -- one per init file.
-  A missing security review causes =generate= to report a FAIL.
+  A missing security review causes =preview-analysis= to report a FAIL.
 
 The tool also checks =~/.emacs.d/soma/inits/= for init files on disk (used
 for orphan package classification).
@@ -58,19 +59,19 @@ for orphan package classification).
 Run the analysis pipeline (dry run -- no files are written):
 
 #+begin_example
-bin/soma-upgrade-prerequisites generate
+bin/soma-upgrade-prerequisites preview-analysis
 #+end_example
 
 Review the report.  When satisfied, write the tracker and derived data:
 
 #+begin_example
-bin/soma-upgrade-prerequisites generate --write
+bin/soma-upgrade-prerequisites write-analysis
 #+end_example
 
 View the progress tracker:
 
 #+begin_example
-bin/soma-upgrade-prerequisites show
+bin/soma-upgrade-prerequisites show-tracker
 #+end_example
 
 The wrapper script resolves symlinks and finds its own project root
@@ -79,36 +80,39 @@ automatically, so it can be invoked from any directory via a symlink
 
 * Subcommands
 
-** generate
+** preview-analysis
 
 Runs the full analysis pipeline: parses the dependency graph, detects cycles,
 identifies the upgrade set, scans for warnings and risks, computes the
-topological sort, and assembles a report.
-
-By default this is a dry run -- the report is printed to stdout and no files
-are written.  Add =--write= to create or update the progress tracker and
-derived data files.
+topological sort, and assembles a report.  No files are written.
 
 #+begin_example
-bin/soma-upgrade-prerequisites generate          # dry run
-bin/soma-upgrade-prerequisites generate --write  # write files
+bin/soma-upgrade-prerequisites preview-analysis
 #+end_example
 
-When =--write= is used and a tracker already exists, statuses in
-=upgraded=, =skipped=, =reverted=, =in-progress=, and =blocked= are
-preserved.  (A =blocked= entry whose blockers are no longer in the
-dependency chain is automatically reset to =pending=.)  A =.bak= backup
-is created before overwriting.
+** write-analysis
 
-** show
+Runs the same analysis pipeline as =preview-analysis= and writes the results
+to disk: creates or updates the progress tracker and derived data files.
+
+#+begin_example
+bin/soma-upgrade-prerequisites write-analysis
+#+end_example
+
+When a tracker already exists, statuses in =upgraded=, =skipped=, =reverted=,
+=in-progress=, and =blocked= are preserved.  (A =blocked= entry whose
+blockers are no longer in the dependency chain is automatically reset to
+=pending=.)  A =.bak= backup is created before overwriting.
+
+** show-tracker
 
 Displays the progress tracker in a human-readable format.
 
 #+begin_example
-bin/soma-upgrade-prerequisites show                       # all entries
-bin/soma-upgrade-prerequisites show --status pending      # only pending
-bin/soma-upgrade-prerequisites show --flags               # only flagged
-bin/soma-upgrade-prerequisites show --dependents soma-magit-init.el
+bin/soma-upgrade-prerequisites show-tracker                       # all entries
+bin/soma-upgrade-prerequisites show-tracker --status pending      # only pending
+bin/soma-upgrade-prerequisites show-tracker --flags               # only flagged
+bin/soma-upgrade-prerequisites show-tracker --dependents soma-magit-init.el
 #+end_example
 
 The =--dependents= option shows which entries would be affected by a
@@ -182,32 +186,32 @@ By default, output files are written to =~/.emacs.d/soma/inits-upgrades/=
 *not* version controlled.
 
 - =upgrade-progress.json= -- the progress tracker (written by
-  =generate --write=, =update-status=, and =update-note=; read by =show=
+  =write-analysis=, =update-status=, and =update-note=; read by =show-tracker=
   and =validate=)
 - =derived-dependency-data.json= -- persisted analysis results (loaded
   automatically by the subcommands that need them)
 
-Both files are created by =generate --write=.  A =.bak= backup of the
+Both files are created by =write-analysis=.  A =.bak= backup of the
 tracker is created before each overwrite.
 
 * Typical Workflow
 
-1. Run =generate --write= to create the tracker and derived data.
-2. Run =show= to review the upgrade order.
+1. Run =write-analysis= to create the tracker and derived data.
+2. Run =show-tracker= to review the upgrade order.
 3. For each pending entry (in order):
    - Set it to =in-progress= with =update-status=.
    - Perform the upgrade (on a dedicated git branch).
    - Set it to =upgraded= with =update-status=.
-4. If an entry must be skipped, run =show --dependents= first to see the
+4. If an entry must be skipped, run =show-tracker --dependents= first to see the
    cascade impact, then =update-status ... skipped=.
 5. Run =validate= periodically to check for inconsistencies.
-6. If the dependency graph changes, re-run =generate --write= to update.
+6. If the dependency graph changes, re-run =write-analysis= to update.
 
 * Troubleshooting
 
 - *"Derived data not found"* or *"Dependency graph has changed"*: the derived
-  data is missing or stale.  Re-run =generate --write= to regenerate it.
-- *"Tracker not found"*: run =generate --write= to create the tracker.
+  data is missing or stale.  Re-run =write-analysis= to regenerate it.
+- *"Tracker not found"*: run =write-analysis= to create the tracker.
 - *Validation reports tracker-vs-git discrepancies*: check that upgrade
   commits on the =elpaca-upgrades= branch follow the expected format
   (=[<init-file>] Upgrade <package> from ...=).  See =validate --help= for options.

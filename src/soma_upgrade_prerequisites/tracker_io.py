@@ -28,7 +28,7 @@ def read_tracker(
         msg = (
             f"Tracker schema version {tracker.schema_version} does not "
             f"match expected {TRACKER_SCHEMA_VERSION}. "
-            "Please re-run `generate --write`."
+            "Please re-run `write-analysis`."
         )
         raise ValueError(msg)
     return tracker

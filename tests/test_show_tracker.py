@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Tests for the show subcommand.
+# Tests for the show-tracker subcommand.
 from __future__ import annotations
 
 import json
@@ -16,15 +16,15 @@ from .tracker_test_helpers import make_entry, make_tracker
 def test_show_help() -> None:
     """(a) show --help prints help text."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["show", "--help"])
+    result = runner.invoke(cli, ["show-tracker", "--help"])
     assert result.exit_code == 0
-    assert "show" in result.output.lower()
+    assert "show-tracker" in result.output.lower()
 
 
 def test_show_invalid_status() -> None:
     """(b) Invalid --status value is handled."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["show", "--status", "nonsense"])
+    result = runner.invoke(cli, ["show-tracker", "--status", "nonsense"])
     assert result.exit_code != 0
 
 
@@ -65,9 +65,10 @@ def test_show_missing_tracker() -> None:
     """(f) Missing tracker file causes exit code 1."""
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--tracker", "/nonexistent/tracker.json",
+        "show-tracker", "--tracker", "/nonexistent/tracker.json",
     ])
     assert result.exit_code == 1
+    assert "write-analysis" in result.output
 
 
 def _write_test_files(
@@ -103,7 +104,7 @@ def test_show_dependents_with_candidates(tmp_path: Path) -> None:
     ], {"a.el": ["b.el"]})
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "a.el",
+        "show-tracker", "--dependents", "a.el",
         "--tracker", tp, "--derived-data", dd, "--graph-json", gp,
     ])
     assert result.exit_code == 0
@@ -117,11 +118,12 @@ def test_show_dependents_missing_derived(tmp_path: Path) -> None:
     Path(tp).write_text(tracker.model_dump_json(indent=2))
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "a.el",
+        "show-tracker", "--dependents", "a.el",
         "--tracker", tp, "--derived-data", "/nonexistent/dd.json",
         "--graph-json", "/nonexistent/g.json",
     ])
     assert result.exit_code == 1
+    assert "write-analysis" in result.output
 
 
 def test_show_dependents_stale_data(tmp_path: Path) -> None:
@@ -141,7 +143,7 @@ def test_show_dependents_stale_data(tmp_path: Path) -> None:
     Path(gp).write_text("{}")
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "a.el",
+        "show-tracker", "--dependents", "a.el",
         "--tracker", tp, "--derived-data", dd, "--graph-json", gp,
     ])
     assert result.exit_code == 1
@@ -154,7 +156,7 @@ def test_show_dependents_unknown_init(tmp_path: Path) -> None:
     ], {})
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "unknown.el",
+        "show-tracker", "--dependents", "unknown.el",
         "--tracker", tp, "--derived-data", dd, "--graph-json", gp,
     ])
     assert result.exit_code == 1
@@ -167,7 +169,7 @@ def test_show_dependents_no_dependents(tmp_path: Path) -> None:
     ], {})
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "a.el",
+        "show-tracker", "--dependents", "a.el",
         "--tracker", tp, "--derived-data", dd, "--graph-json", gp,
     ])
     assert result.exit_code == 0
@@ -183,7 +185,7 @@ def test_show_dependents_mixed_sections(tmp_path: Path) -> None:
     ], {"a.el": ["b.el", "c.el"]})
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "a.el",
+        "show-tracker", "--dependents", "a.el",
         "--tracker", tp, "--derived-data", dd, "--graph-json", gp,
     ])
     assert result.exit_code == 0
@@ -201,7 +203,7 @@ def test_show_dependents_all_terminal(tmp_path: Path) -> None:
     ], {"a.el": ["b.el", "c.el"]})
     runner = CliRunner()
     result = runner.invoke(cli, [
-        "show", "--dependents", "a.el",
+        "show-tracker", "--dependents", "a.el",
         "--tracker", tp, "--derived-data", dd, "--graph-json", gp,
     ])
     assert result.exit_code == 0

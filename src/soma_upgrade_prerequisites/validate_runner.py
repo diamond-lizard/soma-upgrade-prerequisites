@@ -44,7 +44,7 @@ def _load_derived(
     """Load derived data or raise ValueError if missing."""
     dd = read_derived_data(fs, config.derived_data_path)
     if dd is None:
-        msg = "Derived data not found. Run `generate --write` first."
+        msg = "Derived data not found. Run `write-analysis` first."
         raise ValueError(msg)
     return dd
 

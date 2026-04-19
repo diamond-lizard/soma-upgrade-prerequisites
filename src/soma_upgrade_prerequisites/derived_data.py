@@ -34,7 +34,7 @@ def read_derived_data(
         msg = (
             f"Derived data schema version {data.schema_version} does not "
             f"match expected {DERIVED_DATA_SCHEMA_VERSION}. "
-            "Please re-run `generate --write`."
+            "Please re-run `write-analysis`."
         )
         raise ValueError(msg)
     return data

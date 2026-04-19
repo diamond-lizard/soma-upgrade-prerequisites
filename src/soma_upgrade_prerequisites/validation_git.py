@@ -85,6 +85,6 @@ def check_stale_derived_data(
     if current != derived_data.source_graph_hash:
         msg = (
             "Dependency graph has changed since derived data was "
-            "generated. Please re-run `generate --write`."
+            "generated. Please re-run `write-analysis`."
         )
         raise ValueError(msg)

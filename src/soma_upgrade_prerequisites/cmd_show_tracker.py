@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""CLI subcommand: show (render tracker as table or show dependents)."""
-# CLI subcommand: show (render tracker as table or show dependents).
+"""CLI subcommand: show-tracker (render tracker as table or show dependents)."""
+# CLI subcommand: show-tracker (render tracker as table or show dependents).
 from __future__ import annotations
 
 import sys
@@ -24,7 +24,7 @@ _ALL_STATUSES: list[Status] = [
 ]
 
 
-@click.command()
+@click.command("show-tracker")
 @click.option("--tracker", default=DEFAULT_TRACKER_PATH, show_default=True)
 @click.option(
     "--status", "status_filter", default=None,
@@ -34,7 +34,7 @@ _ALL_STATUSES: list[Status] = [
 @click.option("--dependents", default=None, help="Show dependents of INIT.")
 @click.option("--derived-data", default=DEFAULT_DERIVED_DATA_PATH)
 @click.option("--graph-json", default=DEFAULT_GRAPH_JSON)
-def show(
+def show_tracker(
     tracker: str, status_filter: str | None, flags: bool,
     dependents: str | None,
     derived_data: str, graph_json: str,
@@ -52,7 +52,7 @@ def show(
         click.echo(str(exc), err=True)
         sys.exit(1)
     if trk is None:
-        click.echo("Tracker not found. Run `generate --write`.", err=True)
+        click.echo("Tracker not found. Run `write-analysis`.", err=True)
         sys.exit(1)
     if dependents is not None:
         _run_dependents(fs, trk, dependents, derived_data, graph_json)

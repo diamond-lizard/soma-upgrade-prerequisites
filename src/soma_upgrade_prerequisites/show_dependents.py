@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Dependents display logic for the show subcommand."""
-# Dependents display logic for the show subcommand.
+"""Dependents display logic for the show-tracker subcommand."""
+# Dependents display logic for the show-tracker subcommand.
 from __future__ import annotations
 
 import sys
@@ -29,7 +29,7 @@ def show_dependents(
     dd = read_derived_data(fs, dd_path)
     if dd is None:
         click.echo(
-            "Derived data not found. Run `generate --write`.", err=True,
+            "Derived data not found. Run `write-analysis`.", err=True,
         )
         sys.exit(1)
     try:

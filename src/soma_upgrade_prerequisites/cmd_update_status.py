@@ -49,7 +49,7 @@ def update_status(
     fs = RealFileSystem()
     trk = read_tracker(fs, tracker)
     if trk is None:
-        click.echo("Tracker not found. Run `generate --write`.", err=True)
+        click.echo("Tracker not found. Run `write-analysis`.", err=True)
         sys.exit(1)
     if not any(e.init_file == init_file for e in trk.entries):
         click.echo(f"Init file '{init_file}' not found.", err=True)
@@ -83,7 +83,7 @@ def _load_forward(
 
     dd = read_derived_data(fs, dd_path)
     if dd is None:
-        msg = "Derived data not found. Run `generate --write` first."
+        msg = "Derived data not found. Run `write-analysis` first."
         raise ValueError(msg)
     check_stale_derived_data(fs.read_file(graph_path), dd)
     return compute_cascade_candidates(init_file, dd.reverse_deps, trk)

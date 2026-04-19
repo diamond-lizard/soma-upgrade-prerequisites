@@ -34,6 +34,7 @@ def test_update_note_missing_tracker(tmp_path: object) -> None:
         "--tracker", "/nonexistent/tracker.json",
     ])
     assert result.exit_code == 1
+    assert "write-analysis" in result.output
 
 
 def test_update_note_changes_note() -> None:

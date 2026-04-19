@@ -46,7 +46,7 @@ def compute_all_transitive_dependents(
     """Compute ALL transitive dependents regardless of status.
 
     Same BFS as compute_cascade_candidates but without filtering.
-    Used by show --dependents for rollback analysis. Pure function.
+    Used by show-tracker --dependents for rollback analysis. Pure function.
     """
     all_deps = _bfs_dependents(init_file, reverse_deps, tracker)
     return [
