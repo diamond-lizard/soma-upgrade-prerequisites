@@ -7,6 +7,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from ._git_helpers import log_range, rev_parse_commit, verify_ancestry
 from .protocols import GitBoundaryError
 
 
@@ -43,66 +44,20 @@ class RealGitClient:
             raise ValueError(msg)
         return [line.strip() for line in result.stdout.splitlines()]
 
-    def _rev_parse_commit(self, ref: str) -> str | None:
-        """Try to resolve ref to a commit SHA; return None on failure."""
-        result = subprocess.run(
-            ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
-            capture_output=True, text=True,
-            cwd=Path(self._repo_path).expanduser(),
-        )
-        if result.returncode != 0:
-            return None
-        sha = result.stdout.strip()
-        return sha or None
-
-    def _verify_ancestry(
-        self, start_ref: str, start_sha: str,
-        branch_ref: str, branch_tip: str,
-    ) -> None:
-        """Verify start_sha is an ancestor of branch_tip.
-
-        Exit code 0: confirmed. Exit code 1: not ancestor (GitBoundaryError).
-        Exit code >1: git operational error (ValueError).
-        """
-        result = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", start_sha, branch_tip],
-            capture_output=True, text=True,
-            cwd=Path(self._repo_path).expanduser(),
-        )
-        if result.returncode == 1:
-            msg = f"starting_commit '{start_ref}' is not an ancestor of branch '{branch_ref}'"
-            raise GitBoundaryError(msg)
-        if result.returncode > 1:
-            detail = result.stderr.strip()
-            msg = f"git merge-base failed{': ' + detail if detail else ''}"
-            raise ValueError(msg)
-
-    def _log_range(self, start_sha: str, end_sha: str) -> list[str]:
-        """Return log lines for the exclusive range between two resolved SHAs."""
-        result = subprocess.run(
-            ["git", "log", "--oneline", f"{start_sha}..{end_sha}"],
-            capture_output=True, text=True,
-            cwd=Path(self._repo_path).expanduser(),
-        )
-        if result.returncode != 0:
-            detail = result.stderr.strip()
-            msg = f"git log failed{': ' + detail if detail else ''}"
-            raise ValueError(msg)
-        return [line.strip() for line in result.stdout.splitlines()]
-
     def get_log_lines_since(self, branch: str, start_exclusive: str) -> list[str]:
         """Return log lines for commits after start_exclusive on branch.
 
         Validates boundary integrity. Raises GitBoundaryError for boundary
         failures, ValueError for infrastructure errors.
         """
-        start_sha = self._rev_parse_commit(start_exclusive)
+        cwd = Path(self._repo_path).expanduser()
+        start_sha = rev_parse_commit(start_exclusive, cwd)
         if start_sha is None:
             msg = f"could not resolve starting_commit '{start_exclusive}' to a commit"
             raise GitBoundaryError(msg)
-        branch_tip = self._rev_parse_commit(branch)
+        branch_tip = rev_parse_commit(branch, cwd)
         if branch_tip is None:
             msg = f"could not resolve branch '{branch}' to a commit"
             raise ValueError(msg)
-        self._verify_ancestry(start_exclusive, start_sha, branch, branch_tip)
-        return self._log_range(start_sha, branch_tip)
+        verify_ancestry(start_exclusive, start_sha, branch, branch_tip, cwd)
+        return log_range(start_sha, branch_tip, cwd)
