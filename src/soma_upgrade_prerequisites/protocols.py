@@ -45,6 +45,19 @@ class FileSystem(Protocol):
         """Copy file content from src to dst."""
         ...
 
+
+class GitBoundaryError(ValueError):
+    """Boundary validation failure in get_log_lines_since.
+
+    Raised when start_exclusive cannot be resolved to a commit or is not
+    an ancestor of the target branch.  Caught non-fatally by the validation
+    runner so that remaining checks can still proceed.
+
+    Infrastructure errors (branch not found, git operational failures) use
+    plain ValueError instead.
+    """
+
+
 class GitClient(Protocol):
     """Abstraction over git operations for dependency injection."""
 
@@ -54,4 +67,13 @@ class GitClient(Protocol):
 
     def get_log_lines(self, branch: str) -> list[str]:
         """Return git log --oneline output as a list of strings."""
+        ...
+
+    def get_log_lines_since(self, branch: str, start_exclusive: str) -> list[str]:
+        """Return git log --oneline output for commits after start_exclusive on branch.
+
+        Raises GitBoundaryError for boundary validation failures
+        (start_exclusive not found or not an ancestor of branch).
+        Raises ValueError for git infrastructure errors.
+        """
         ...
