@@ -10,6 +10,7 @@ import click
 
 from .derived_data import read_derived_data
 from .models import DependencyGraph
+from .protocols import GitBoundaryError
 from .validation import (
     validate_mapping_completeness,
     validate_reverse_deps,
@@ -33,8 +34,8 @@ def run_validation(
     graph_content = fs.read_file(config.graph_json_path)
     check_stale_derived_data(graph_content, dd)
     graph_data = DependencyGraph.model_validate_json(graph_content)
-    git_lines = git.get_log_lines(config.branch)
-    errors = _collect_errors(graph_data, dd, trk, git_lines)
+    git_errors = _check_tracker_vs_git(git, config.branch, trk)
+    errors = _collect_errors(graph_data, dd, trk, git_errors)
     _report_and_exit(errors)
 
 
@@ -49,11 +50,26 @@ def _load_derived(
     return dd
 
 
+def _check_tracker_vs_git(
+    git: GitClient, branch: str, trk: ProgressTracker,
+) -> list[str]:
+    """Run tracker-vs-git check with boundary scoping.
+
+    Boundary errors are non-fatal (reported as check errors).
+    Infrastructure errors (plain ValueError) propagate to the caller.
+    """
+    try:
+        git_lines = git.get_log_lines_since(branch, trk.starting_commit)
+    except GitBoundaryError as exc:
+        return [str(exc)]
+    return validate_tracker_vs_git(trk, git_lines)
+
+
 def _collect_errors(
     graph_data: DependencyGraph, dd: DerivedDependencyData,
-    trk: ProgressTracker, git_lines: list[str],
+    trk: ProgressTracker, git_errors: list[str],
 ) -> dict[str, list[str]]:
-    """Run all five validation checks, return errors grouped by name."""
+    """Run all five checks; git errors are pre-computed by caller."""
     return {
         "Mapping completeness": validate_mapping_completeness(
             graph_data, dd.pkg_to_init,
@@ -67,7 +83,7 @@ def _collect_errors(
         "Tracker vs sort": validate_tracker_vs_sort(
             trk, dd.sorted_files,
         ),
-        "Tracker vs git": validate_tracker_vs_git(trk, git_lines),
+        "Tracker vs git": git_errors,
     }
 
 
