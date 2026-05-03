@@ -3,11 +3,9 @@
 # Validation orchestration: load data, run checks, report results.
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 
-import click
-
+from ._report import report_and_exit
 from .derived_data import read_derived_data
 from .models import DependencyGraph
 from .protocols import GitBoundaryError
@@ -36,7 +34,7 @@ def run_validation(
     graph_data = DependencyGraph.model_validate_json(graph_content)
     git_errors = _check_tracker_vs_git(git, config.branch, trk)
     errors = _collect_errors(graph_data, dd, trk, git_errors)
-    _report_and_exit(errors)
+    report_and_exit(errors)
 
 
 def _load_derived(
@@ -85,17 +83,3 @@ def _collect_errors(
         ),
         "Tracker vs git": git_errors,
     }
-
-
-def _report_and_exit(errors: dict[str, list[str]]) -> None:
-    """Print results grouped by check and exit with appropriate code."""
-    has_errors = False
-    for check, msgs in errors.items():
-        if msgs:
-            has_errors = True
-            click.echo(f"\n{check}:")
-            for msg in msgs:
-                click.echo(f"  - {msg}")
-    if has_errors:
-        sys.exit(1)
-    click.echo("All validation checks passed.")
