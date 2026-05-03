@@ -8,11 +8,11 @@ from soma_upgrade_prerequisites.models import (
 )
 
 
-def make_tracker(entries: list[TrackerEntry]) -> ProgressTracker:
+def make_tracker(entries: list[TrackerEntry], starting_commit: str = "abc") -> ProgressTracker:
     """Build a minimal ProgressTracker with given entries."""
     return ProgressTracker(
         schema_version=1,
-        starting_commit="abc",
+        starting_commit=starting_commit,
         generated_at="2026-01-01",
         status_definitions={},
         entries=entries,
