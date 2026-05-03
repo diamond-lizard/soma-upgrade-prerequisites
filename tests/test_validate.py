@@ -6,9 +6,13 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
+from soma_upgrade_prerequisites.config import ValidateConfig
 from soma_upgrade_prerequisites.main import cli
+from soma_upgrade_prerequisites.protocols import GitBoundaryError
+from soma_upgrade_prerequisites.validate_runner import run_validation
 from soma_upgrade_prerequisites.validation import (
     validate_tracker_vs_sort,
 )
@@ -16,6 +20,8 @@ from soma_upgrade_prerequisites.validation_git import (
     validate_tracker_vs_git,
 )
 
+from .fake_git import FakeGitClient
+from .fakes import InMemoryFileSystem
 from .tracker_test_helpers import make_entry, make_tracker
 
 
@@ -117,13 +123,6 @@ def _invoke_validate(
 
 def test_validate_all_checks_pass() -> None:
     """(f) All five checks pass, no SystemExit raised."""
-    import hashlib
-
-    from soma_upgrade_prerequisites.config import ValidateConfig
-    from soma_upgrade_prerequisites.validate_runner import run_validation
-
-    from .fake_git import FakeGitClient
-    from .fakes import InMemoryFileSystem
 
     graph_content = "{}"
     graph_hash = hashlib.sha256(graph_content.encode()).hexdigest()
@@ -195,3 +194,113 @@ def test_validate_stale_derived_data(tmp_path: Path) -> None:
         "--graph-json", gp, "--branch", "test-branch",
     ])
     assert result.exit_code == 1
+
+
+def _run_with_fakes(
+    tracker, git,
+    sorted_files=None,
+):
+    """Run validation with fake FS and git; raises SystemExit on errors."""
+    graph_content = "{}"
+    graph_hash = hashlib.sha256(graph_content.encode()).hexdigest()
+    files = sorted_files or [e.init_file for e in tracker.entries]
+    derived = json.dumps({
+        "schema_version": 1, "source_graph_hash": graph_hash,
+        "pkg_to_init": {}, "init_to_packages": {},
+        "init_dep_graph": {}, "reverse_deps": {},
+        "sorted_files": files,
+    })
+    fs = InMemoryFileSystem({
+        "/graph.json": graph_content,
+        "/derived.json": derived,
+    })
+    config = ValidateConfig(
+        tracker_path="/t.json", branch="main",
+        graph_json_path="/graph.json", derived_data_path="/derived.json",
+    )
+    run_validation(fs, git, config, tracker)
+
+
+def test_ac1_no_post_boundary_commits() -> None:
+    """AC1: no commits after starting_commit means zero git discrepancies."""
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    git = FakeGitClient("abc", [], "main", log_lines_since=[])
+    _run_with_fakes(tracker, git)
+
+
+def test_ac2_pending_with_current_round_commit() -> None:
+    """AC2: current-round commit + pending entry reports discrepancy."""
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    git = FakeGitClient(
+        "abc", [], "main",
+        log_lines_since=["abc123 [a.el] Upgrade pkg from v1 to v2"],
+    )
+    with pytest.raises(SystemExit) as exc_info:
+        _run_with_fakes(tracker, git)
+    assert exc_info.value.code == 1
+
+
+def test_ac3_historical_commit_invisible() -> None:
+    """AC3: pre-boundary commit for non-tracker file is invisible."""
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    git = FakeGitClient(
+        "abc",
+        ["old123 [old.el] Upgrade old from v1 to v2"],
+        "main",
+        log_lines_since=[],
+    )
+    _run_with_fakes(tracker, git)
+    assert ("get_log_lines_since", "main", "abc") in git.calls
+    assert not any(c[0] == "get_log_lines" for c in git.calls)
+
+
+def test_ac4_prior_round_commit_ignored() -> None:
+    """AC4: prior-round commit for re-pending init file is ignored."""
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    git = FakeGitClient(
+        "abc",
+        ["old123 [a.el] Upgrade pkg from v0 to v1"],
+        "main",
+        log_lines_since=[],
+    )
+    _run_with_fakes(tracker, git)
+
+
+def test_ac5_boundary_error_plus_sort_error(capsys) -> None:
+    """AC5: boundary error in git section AND sort error both reported."""
+    tracker = make_tracker([
+        make_entry("a.el", status="pending"),
+        make_entry("b.el", status="pending"),
+    ])
+    git = FakeGitClient(
+        "abc", [], "main",
+        log_lines_since_exception=GitBoundaryError("bad starting_commit"),
+    )
+    with pytest.raises(SystemExit) as exc_info:
+        _run_with_fakes(tracker, git, sorted_files=["b.el", "a.el"])
+    assert exc_info.value.code == 1
+    out = capsys.readouterr().out
+    assert "Tracker vs git:" in out
+    assert "bad starting_commit" in out
+    assert "Tracker vs sort:" in out
+
+
+def test_ac5_fatal_value_error_propagates() -> None:
+    """AC5-fatal: plain ValueError propagates, not caught by runner."""
+    tracker = make_tracker([make_entry("a.el", status="pending")])
+    git = FakeGitClient(
+        "abc", [], "main",
+        log_lines_since_exception=ValueError("git not installed"),
+    )
+    with pytest.raises(ValueError, match="git not installed"):
+        _run_with_fakes(tracker, git)
+
+
+def test_boundary_equality_not_an_error() -> None:
+    """Boundary equality: starting_commit == tip is valid, not an error."""
+    tracker = make_tracker(
+        [make_entry("a.el", status="pending")],
+        starting_commit="tip_sha",
+    )
+    git = FakeGitClient("tip_sha", [], "main", log_lines_since=[])
+    _run_with_fakes(tracker, git)
